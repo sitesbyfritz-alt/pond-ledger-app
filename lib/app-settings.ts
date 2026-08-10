@@ -11,6 +11,7 @@ export interface LockConfig {
 const KEYS = {
   onboarded: "pl-onboarded",
   lock: "pl-lock",
+  aiConsent: "pl-ai-consent",
 } as const;
 
 function read(key: string): string | null {
@@ -55,4 +56,22 @@ export function setLockConfig(config: LockConfig | null): void {
 }
 export function hasLock(): boolean {
   return getLockConfig() !== null;
+}
+
+export type AiConsent = "unset" | "aggregates" | "anonymous" | "declined";
+
+const AI_CONSENT_VALUES: readonly AiConsent[] = [
+  "unset",
+  "aggregates",
+  "anonymous",
+  "declined",
+];
+
+export function getAiConsent(): AiConsent {
+  const raw = read(KEYS.aiConsent);
+  return AI_CONSENT_VALUES.includes(raw as AiConsent) ? (raw as AiConsent) : "unset";
+}
+
+export function setAiConsent(value: AiConsent): void {
+  write(KEYS.aiConsent, value === "unset" ? null : value);
 }
