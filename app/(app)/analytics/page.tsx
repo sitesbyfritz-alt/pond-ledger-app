@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -9,6 +9,8 @@ import {
 import { Lightbulb, Sparkles, HeartPulse, BarChart3, LineChart, Fish, Plus, Download } from "lucide-react";
 import { useFarm, useAnalytics } from "@/hooks/use-pond-data";
 import { pondMetric, insights, type Insight } from "@/lib/analytics";
+import { buildInsightPayload } from "@/lib/ai-insights";
+import { getAiConsent, setAiConsent, type AiConsent } from "@/lib/app-settings";
 import { portfolioCsv } from "@/lib/report";
 import { formatNaira, formatPct } from "@/lib/format";
 import { Card } from "@/components/ui/card";
@@ -73,7 +75,7 @@ export default function AnalyticsPage() {
         </Button>
       </div>
 
-      <InsightPanel insights={insightList} />
+      <InsightPanel insights={insightList} metrics={metrics} marketPriceKobo={data?.marketPriceKobo ?? null} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -114,7 +116,58 @@ export default function AnalyticsPage() {
   );
 }
 
-function InsightPanel({ insights }: { insights: Insight[] }) {
+function InsightPanel({
+  insights,
+  metrics,
+  marketPriceKobo,
+}: {
+  insights: Insight[];
+  metrics: ReturnType<typeof pondMetric>[];
+  marketPriceKobo: number | null;
+}) {
+  const [summary, setSummary] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [askConsent, setAskConsent] = useState(false);
+  const aiEnabled = AI_ENABLED;
+
+  async function generate(consent: Exclude<AiConsent, "unset" | "declined">) {
+    setStatus("loading");
+    setSummary(null);
+    try {
+      const payload = buildInsightPayload(metrics, marketPriceKobo, {
+        includeNames: consent === "aggregates",
+      });
+      const res = await fetch("/api/insights", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = (await res.json()) as { summary: string };
+      setSummary(data.summary);
+      setStatus("idle");
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  function onGenerateClick() {
+    const consent = getAiConsent();
+    if (consent === "aggregates" || consent === "anonymous") {
+      void generate(consent);
+    } else {
+      setAskConsent(true);
+    }
+  }
+
+  function choose(consent: AiConsent) {
+    setAiConsent(consent);
+    setAskConsent(false);
+    if (consent === "aggregates" || consent === "anonymous") void generate(consent);
+  }
+
+  const badgeLabel = summary ? "AI enhanced" : aiEnabled ? "AI ready" : "On-device";
+
   return (
     <Card>
       <div className="flex items-center justify-between">
@@ -123,9 +176,37 @@ function InsightPanel({ insights }: { insights: Insight[] }) {
           <h2 className="font-display text-sm font-semibold">Insights</h2>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-[11px] text-muted-foreground">
-          <Sparkles className="h-3 w-3" /> {AI_ENABLED ? "AI enhanced" : "On-device"}
+          <Sparkles className="h-3 w-3" /> {badgeLabel}
         </span>
       </div>
+
+      {aiEnabled && (
+        <div className="mt-4">
+          {summary ? (
+            <motion.p
+              key={summary}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+              className="rounded-xl bg-secondary/40 px-3 py-3 text-sm leading-relaxed"
+            >
+              {summary}
+            </motion.p>
+          ) : status === "loading" ? (
+            <div className="h-16 animate-pulse rounded-xl bg-secondary" />
+          ) : null}
+
+          <div className="mt-3 flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={onGenerateClick} disabled={status === "loading"}>
+              <Sparkles className="h-4 w-4" /> {summary ? "Regenerate" : "Generate summary"}
+            </Button>
+            {status === "error" && (
+              <span className="text-[11px] text-muted-foreground">AI summary unavailable — showing on-device insights.</span>
+            )}
+          </div>
+        </div>
+      )}
+
       <ul className="mt-4 grid gap-2 sm:grid-cols-2">
         {insights.map((ins, i) => (
           <motion.li
@@ -146,10 +227,28 @@ function InsightPanel({ insights }: { insights: Insight[] }) {
           </motion.li>
         ))}
       </ul>
-      {!AI_ENABLED && (
+
+      {!aiEnabled && (
         <p className="mt-3 text-[11px] text-muted-foreground">
           These run entirely on your device. Add an AI key to enable deeper written analysis.
         </p>
+      )}
+
+      {askConsent && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" role="dialog" aria-modal="true">
+          <Card className="max-w-sm">
+            <h3 className="font-display text-base font-semibold">Send summary numbers to AI?</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This sends your farm&apos;s <strong>summary numbers</strong> (cost/kg, survival, feed conversion) — <strong>not</strong> your
+              daily logs — to Google&apos;s AI to write a plain-language summary. Your pond names can be excluded.
+            </p>
+            <div className="mt-4 flex flex-col gap-2">
+              <Button size="sm" onClick={() => choose("aggregates")}>Include pond names</Button>
+              <Button variant="outline" size="sm" onClick={() => choose("anonymous")}>Exclude names</Button>
+              <Button variant="ghost" size="sm" onClick={() => choose("declined")}>Not now</Button>
+            </div>
+          </Card>
+        </div>
       )}
     </Card>
   );
