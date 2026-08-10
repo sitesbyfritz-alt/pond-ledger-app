@@ -155,9 +155,10 @@ function InsightPanel({
     const consent = getAiConsent();
     if (consent === "aggregates" || consent === "anonymous") {
       void generate(consent);
-    } else {
+    } else if (consent === "unset") {
       setAskConsent(true);
     }
+    // "declined": do nothing — the farmer opted out; don't re-prompt.
   }
 
   function choose(consent: AiConsent) {
