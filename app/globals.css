@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PondLedger design tokens. Dark-first; elegant light mode.
+   Water-teal primary, warm-gold "value" accent, sophisticated semantics. */
+@layer base {
+  :root {
+    /* Light mode */
+    --background: 200 30% 98%;
+    --foreground: 210 30% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 30% 12%;
+    --primary: 174 84% 38%; /* aqua-teal */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 200 20% 94%;
+    --secondary-foreground: 210 25% 20%;
+    --muted: 200 20% 94%;
+    --muted-foreground: 210 12% 42%;
+    --accent: 174 70% 92%;
+    --accent-foreground: 174 84% 24%;
+    --value: 38 92% 55%; /* warm gold */
+    --profit: 152 60% 42%;
+    --loss: 358 68% 55%;
+    --warning: 33 92% 52%;
+    --border: 200 20% 88%;
+    --input: 200 20% 88%;
+    --ring: 174 84% 38%;
+    --radius: 1rem;
+
+    --font-sans: "Inter", system-ui, sans-serif;
+    --font-display: "Inter", system-ui, sans-serif;
+  }
+
+  .dark {
+    --background: 215 32% 6%; /* near-black, cool undertone (#0A0E14-ish) */
+    --foreground: 200 20% 92%;
+    --card: 213 28% 10%; /* elevated surface (#121821-ish) */
+    --card-foreground: 200 20% 92%;
+    --primary: 172 72% 47%;
+    --primary-foreground: 213 40% 6%;
+    --secondary: 213 22% 15%;
+    --secondary-foreground: 200 18% 88%;
+    --muted: 213 20% 15%;
+    --muted-foreground: 210 12% 62%;
+    --accent: 174 60% 18%;
+    --accent-foreground: 172 72% 72%;
+    --value: 41 90% 60%;
+    --profit: 152 58% 52%;
+    --loss: 358 72% 62%;
+    --warning: 36 90% 58%;
+    --border: 214 20% 18%;
+    --input: 214 20% 18%;
+    --ring: 172 72% 47%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer base {
+  body {
+    /* faint water-teal light bloom, top-left; sits under all surfaces */
+    background-image:
+      radial-gradient(80rem 60rem at -10% -20%, hsl(var(--primary) / 0.06), transparent 55%),
+      radial-gradient(70rem 50rem at 110% 0%, hsl(var(--value) / 0.05), transparent 55%);
+    background-attachment: fixed;
+  }
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+  /* Numbers line up during count-ups and in tables */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+}
+
+/* Subtle premium surface treatment for cards */
+@layer components {
+  .surface {
+    background:
+      linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.85) 100%);
+    border: 1px solid hsl(var(--border) / 0.8);
+    border-radius: var(--radius);
+    box-shadow:
+      0 1px 0 0 hsl(0 0% 100% / 0.03) inset,
+      0 8px 24px -12px hsl(215 40% 3% / 0.5);
+  }
+  /* Interactive surfaces (pond cards, nav items) lift subtly on hover. */
+  .surface-hover {
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .surface-hover:hover {
+    transform: translateY(-2px);
+    border-color: hsl(var(--primary) / 0.35);
+    box-shadow:
+      0 1px 0 0 hsl(0 0% 100% / 0.04) inset,
+      0 18px 40px -18px hsl(215 40% 3% / 0.65);
+  }
+  /* Bento grid: dense 12-col on desktop, single column on phones. */
+  .grid-bento {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  @media (min-width: 640px) {
+    .grid-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .grid-bento { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  }
+  /* Focus ring for keyboard users across custom controls. */
+  .focus-ring:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
