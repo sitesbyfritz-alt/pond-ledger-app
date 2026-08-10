@@ -49,6 +49,14 @@ PondLedger/
 │          .gitignore, .env.example
 ```
 
+## AI insight panel (optional)
+
+The analytics page can generate a one-paragraph plain-language summary via Google Gemini.
+It is off unless `NEXT_PUBLIC_ENABLE_AI_INSIGHTS=true` and `GOOGLE_API_KEY` are set.
+The key lives only in the `/api/insights` server route (a Netlify function) — never in the browser.
+Only aggregated metrics (cost/kg, FCR, survival, margin) are sent, never raw logs, and only after
+a one-time in-app consent. With no key or when offline, the app falls back to the on-device rule insights.
+
 ## Tell Claude Code
 
 > Read `PondLedger_ClaudeCode_BuildPrompt.md` and `CLAUDE.md`, and everything in `lib/` and `app/`. The scaffold runs already. Build the real product starting at Milestone 1 (the bento-grid dashboard), reusing the calc engine and repository. Pause for my review after each milestone.
