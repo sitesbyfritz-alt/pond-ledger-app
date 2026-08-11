@@ -1,11 +1,11 @@
 import { Sidebar } from "@/components/shell/sidebar";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { Topbar } from "@/components/shell/topbar";
-import { PaletteStub } from "@/components/shell/palette-stub";
+import { CommandPalette } from "@/components/shell/command-palette";
 import { AppGate } from "@/components/shell/app-gate";
 
 /** Shared chrome for every in-app screen: desktop sidebar, mobile bottom-nav +
- *  FAB, sticky topbar, and the ⌘K palette stub. AppGate handles first-run
+ *  FAB, sticky topbar, and the ⌘K command palette. AppGate handles first-run
  *  onboarding redirect and the PIN lock. Route group — URLs unchanged. */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -24,7 +24,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
         <BottomNav />
-        <PaletteStub />
+        <CommandPalette />
       </div>
     </AppGate>
   );
