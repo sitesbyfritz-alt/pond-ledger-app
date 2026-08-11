@@ -31,17 +31,21 @@ function applyTheme(theme: Theme) {
 interface UIState {
   theme: Theme;
   paletteOpen: boolean;
+  tourOpen: boolean;
   toggleTheme: () => void;
   setPaletteOpen: (open: boolean) => void;
+  setTourOpen: (open: boolean) => void;
 }
 
 export const useUI = create<UIState>((set, get) => ({
   theme: readTheme(),
   paletteOpen: false,
+  tourOpen: false,
   toggleTheme: () => {
     const next: Theme = get().theme === "dark" ? "light" : "dark";
     applyTheme(next);
     set({ theme: next });
   },
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
+  setTourOpen: (tourOpen) => set({ tourOpen }),
 }));

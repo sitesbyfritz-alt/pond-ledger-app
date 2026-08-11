@@ -12,6 +12,7 @@ const KEYS = {
   onboarded: "pl-onboarded",
   lock: "pl-lock",
   aiConsent: "pl-ai-consent",
+  tour: "pl-tour",
 } as const;
 
 function read(key: string): string | null {
@@ -66,6 +67,15 @@ const AI_CONSENT_VALUES: readonly AiConsent[] = [
   "anonymous",
   "declined",
 ];
+
+/** First-run feature walkthrough. Once the farmer finishes or skips the tour we
+ *  never auto-show it again; they can replay it from Settings. */
+export function hasSeenTour(): boolean {
+  return read(KEYS.tour) === "1";
+}
+export function setTourSeen(seen: boolean): void {
+  write(KEYS.tour, seen ? "1" : null);
+}
 
 export function getAiConsent(): AiConsent {
   const raw = read(KEYS.aiConsent);

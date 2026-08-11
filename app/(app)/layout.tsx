@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/shell/sidebar";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { Topbar } from "@/components/shell/topbar";
 import { CommandPalette } from "@/components/shell/command-palette";
+import { WelcomeTour } from "@/components/shell/welcome-tour";
 import { AppGate } from "@/components/shell/app-gate";
 
 /** Shared chrome for every in-app screen: desktop sidebar, mobile bottom-nav +
@@ -25,6 +26,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
         <BottomNav />
         <CommandPalette />
+        <WelcomeTour />
       </div>
     </AppGate>
   );

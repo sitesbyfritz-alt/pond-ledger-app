@@ -4,12 +4,13 @@
 // All data access goes through the repository.
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { Download, Upload, ShieldCheck, ShieldOff, AlertTriangle, Check, Package, ArrowUpRight } from "lucide-react";
+import { Download, Upload, ShieldCheck, ShieldOff, AlertTriangle, Check, Package, ArrowUpRight, PlayCircle, BookOpen } from "lucide-react";
 import { repo } from "@/lib/repository";
 import { generateSalt, hashPin, isValidPin } from "@/lib/security";
 import { getLockConfig } from "@/lib/app-settings";
 import { verifyPin } from "@/lib/security";
 import { useSession } from "@/stores/session";
+import { useUI } from "@/stores/ui";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -30,9 +31,35 @@ export default function MorePage() {
         </div>
         <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
       </Link>
+      <HelpSection />
       <BackupSection />
       <SecuritySection />
     </div>
+  );
+}
+
+function HelpSection() {
+  const setTourOpen = useUI((s) => s.setTourOpen);
+  return (
+    <Card>
+      <div className="flex items-center gap-2">
+        <BookOpen className="h-4 w-4 text-primary" />
+        <h2 className="font-display text-sm font-semibold">Guide &amp; app tour</h2>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        New here, or want a refresher? Take the quick walkthrough, or open the full guide.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Button variant="secondary" onClick={() => setTourOpen(true)}>
+          <PlayCircle className="h-4 w-4" /> Replay the tour
+        </Button>
+        <a href="/manual.html" target="_blank" rel="noopener noreferrer">
+          <Button variant="outline">
+            <BookOpen className="h-4 w-4" /> Open user guide
+          </Button>
+        </a>
+      </div>
+    </Card>
   );
 }
 

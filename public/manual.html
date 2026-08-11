@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PondLedger — Farmer's Guide</title>
+<style>
+  :root{
+    --teal:#0e7c86; --teal-soft:#e6f4f5; --gold:#b8860b; --gold-soft:#fbf3df;
+    --ink:#14201f; --muted:#5a6b6a; --line:#e2e8e7; --bg:#ffffff; --panel:#f6faf9;
+    --profit:#1f8a54; --loss:#c0392b; --warn:#b8860b; --radius:14px;
+    --maxw:820px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --teal:#3fc7d1; --teal-soft:#0e2a2d; --gold:#e2b23c; --gold-soft:#2a2410;
+      --ink:#e8efee; --muted:#9fb1af; --line:#233230; --bg:#0c1413; --panel:#111d1c;
+      --profit:#43c98a; --loss:#f0736a; --warn:#e2b23c;
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--teal); text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* ---- header ---- */
+  header.top{
+    background:linear-gradient(160deg,var(--teal),#0a5c64);
+    color:#fff; padding:44px 20px 40px;
+  }
+  @media (prefers-color-scheme: dark){ header.top{background:linear-gradient(160deg,#0e3d42,#081d20)} }
+  .top-inner{max-width:var(--maxw); margin:0 auto}
+  .brand{display:flex; align-items:center; gap:12px; font-weight:700; font-size:1.15rem}
+  .brand .drop{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.16);
+    display:grid;place-items:center;font-size:20px}
+  header.top h1{margin:20px 0 6px; font-size:2rem; line-height:1.15; letter-spacing:-.02em}
+  header.top p{margin:0; max-width:60ch; color:rgba(255,255,255,.9)}
+  .badges{margin-top:18px; display:flex; flex-wrap:wrap; gap:8px}
+  .badge{background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.22);
+    padding:5px 11px; border-radius:999px; font-size:.8rem}
+
+  /* ---- layout ---- */
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px}
+  .layout{max-width:1120px; margin:0 auto; display:grid; grid-template-columns:240px 1fr; gap:36px; padding:0 20px}
+  nav.toc{
+    position:sticky; top:0; align-self:start; max-height:100vh; overflow:auto;
+    padding:28px 8px 40px; font-size:.9rem;
+  }
+  nav.toc h4{margin:14px 8px 6px; font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted)}
+  nav.toc a{display:block; padding:6px 10px; border-radius:8px; color:var(--ink)}
+  nav.toc a:hover{background:var(--panel); text-decoration:none}
+  main{min-width:0; padding:34px 0 90px}
+  @media (max-width:860px){
+    .layout{display:block; padding:0}
+    nav.toc{position:static; max-height:none; padding:18px 20px; border-bottom:1px solid var(--line)}
+    nav.toc a{display:inline-block}
+    main{padding:22px 20px 70px}
+  }
+
+  section{scroll-margin-top:16px; padding:10px 0 8px; border-top:1px solid var(--line); margin-top:30px}
+  section:first-of-type{border-top:none; margin-top:8px}
+  h2{font-size:1.5rem; letter-spacing:-.01em; margin:.4em 0 .3em}
+  h2 .n{color:var(--teal); font-variant-numeric:tabular-nums}
+  h3{font-size:1.12rem; margin:1.3em 0 .3em}
+  p,li{color:var(--ink)}
+  .lead{color:var(--muted); font-size:1.05rem}
+  ul,ol{padding-left:1.25em}
+  li{margin:.28em 0}
+  strong{font-weight:650}
+  code{background:var(--panel); border:1px solid var(--line); padding:1px 6px; border-radius:6px;
+    font:.88em ui-monospace,SFMono-Regular,Menlo,monospace}
+  kbd{background:var(--panel);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;
+    padding:1px 7px;font:.82em ui-monospace,monospace}
+
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; margin:16px 0}
+  .callout{border-left:4px solid var(--teal); background:var(--teal-soft); border-radius:10px; padding:12px 16px; margin:16px 0}
+  .callout.tip{border-color:var(--gold); background:var(--gold-soft)}
+  .callout.warn{border-color:var(--loss)}
+  .callout .k{font-weight:700; display:block; margin-bottom:2px; font-size:.82rem; text-transform:uppercase; letter-spacing:.05em}
+  .callout.tip .k{color:var(--gold)} .callout .k{color:var(--teal)} .callout.warn .k{color:var(--loss)}
+
+  .steps{counter-reset:s; list-style:none; padding-left:0}
+  .steps>li{counter-increment:s; position:relative; padding:6px 0 6px 44px; margin:6px 0}
+  .steps>li::before{content:counter(s); position:absolute; left:0; top:4px; width:30px; height:30px;
+    background:var(--teal); color:#fff; border-radius:50%; display:grid; place-items:center; font-weight:700; font-size:.9rem}
+
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:.95rem; display:block; overflow-x:auto}
+  th,td{border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top}
+  th{background:var(--panel); font-weight:650}
+  .profit{color:var(--profit); font-weight:650}
+  .loss{color:var(--loss); font-weight:650}
+
+  .glossary dt{font-weight:650; margin-top:12px}
+  .glossary dd{margin:2px 0 0; color:var(--muted)}
+
+  .faq details{border:1px solid var(--line); border-radius:10px; padding:2px 14px; margin:10px 0; background:var(--panel)}
+  .faq summary{cursor:pointer; font-weight:600; padding:10px 0}
+  .faq summary::marker{color:var(--teal)}
+  .faq p{margin:0 0 12px}
+
+  footer{max-width:var(--maxw); margin:0 auto; padding:26px 20px 60px; color:var(--muted); font-size:.86rem; border-top:1px solid var(--line)}
+  .pill{display:inline-block; background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:2px 10px; font-size:.8rem; color:var(--muted)}
+  @media print{ nav.toc, header.top .badges{display:none} header.top{background:#0e7c86 !important} .layout{display:block} }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand"><span class="drop">💧</span> PondLedger</div>
+    <h1>The Farmer's Guide</h1>
+    <p>Everything you need to know your true cost per kilo of catfish — and whether each pond is
+       making you money. Written in plain language, step by step.</p>
+    <div class="badges">
+      <span class="badge">📴 Works offline</span>
+      <span class="badge">🔒 Stays on your phone</span>
+      <span class="badge">⏱️ Daily log under 30 seconds</span>
+      <span class="badge">🆓 No account needed</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc" aria-label="Contents">
+    <h4>Start here</h4>
+    <a href="#what">What PondLedger does</a>
+    <a href="#install">Install on your phone</a>
+    <a href="#setup">First-time setup</a>
+    <h4>Everyday use</h4>
+    <a href="#dashboard">Reading the Dashboard</a>
+    <a href="#log">The daily feeding log</a>
+    <a href="#ponds">Ponds &amp; batches</a>
+    <a href="#weights">Weighing your fish</a>
+    <a href="#deaths">Recording deaths</a>
+    <a href="#feed">Feed &amp; market price</a>
+    <h4>Money &amp; decisions</h4>
+    <a href="#analytics">Analytics &amp; trends</a>
+    <a href="#ai">The AI summary</a>
+    <a href="#harvest">When to harvest</a>
+    <h4>Keeping data safe</h4>
+    <a href="#backup">Backup &amp; restore</a>
+    <a href="#lock">Locking with a PIN</a>
+    <h4>Reference</h4>
+    <a href="#glossary">Word list</a>
+    <a href="#faq">Common questions</a>
+    <a href="#trouble">If something goes wrong</a>
+  </nav>
+
+  <main>
+    <section id="what">
+      <h2><span class="n">1.</span> What PondLedger does</h2>
+      <p class="lead">PondLedger answers one simple question at any moment:
+        <strong>“What is a kilogram of fish costing me in this pond, right now?”</strong></p>
+      <p>Many farmers only find out if a pond made money <em>after</em> they sell — and by then it is too
+        late to change anything. PondLedger works out your cost <strong>while the fish are still growing</strong>,
+        so you can act early: feed smarter, fix a sick pond, or pick the best week to sell.</p>
+      <p>You do one small job each day — write down how much feed you gave. The app quietly does all the
+        maths behind the scenes: your cost per kilo, how efficiently feed turns into fish, how many fish
+        are surviving, and whether you are ahead of or behind today's market price.</p>
+      <div class="callout">
+        <span class="k">Your data is yours</span>
+        Everything is stored <strong>only on this phone</strong>. There is no account and nothing is sent to
+        the internet (except the optional AI summary, which you turn on yourself). If you clear the app or
+        lose the phone without a backup, the records are gone — so please read the
+        <a href="#backup">Backup</a> section.
+      </div>
+    </section>
+
+    <section id="install">
+      <h2><span class="n">2.</span> Install it on your phone</h2>
+      <p>PondLedger opens in your web browser, but you can add it to your home screen so it opens like a
+        normal app and works even with no network at the pond side.</p>
+      <h3>On Android (Chrome)</h3>
+      <ol class="steps">
+        <li>Open PondLedger in Chrome.</li>
+        <li>Tap the three dots <strong>⋮</strong> at the top-right.</li>
+        <li>Tap <strong>“Add to Home screen”</strong> (or “Install app”), then <strong>Add</strong>.</li>
+        <li>A PondLedger icon appears on your home screen. Open it from there from now on.</li>
+      </ol>
+      <h3>On iPhone (Safari)</h3>
+      <ol class="steps">
+        <li>Open PondLedger in Safari.</li>
+        <li>Tap the <strong>Share</strong> button (the square with an arrow going up).</li>
+        <li>Scroll down and tap <strong>“Add to Home Screen”</strong>, then <strong>Add</strong>.</li>
+      </ol>
+      <div class="callout tip">
+        <span class="k">Tip</span>
+        After installing once, you can use PondLedger with no internet — perfect for logging feed right at
+        the pond. Your entries save on the phone and are always there when you reopen the app.
+      </div>
+    </section>
+
+    <section id="setup">
+      <h2><span class="n">3.</span> First-time setup</h2>
+      <p>The very first time you open PondLedger it asks a few quick questions. You have two ways to begin:</p>
+      <table>
+        <tr><th>Choice</th><th>What it does</th><th>Best for</th></tr>
+        <tr><td><strong>Explore with demo data</strong></td><td>Loads two example ponds already full of
+          records so you can look around and see everything working.</td><td>Getting a feel for the app before
+          entering your own farm.</td></tr>
+        <tr><td><strong>Start fresh</strong></td><td>Sets up your own empty farm.</td><td>When you are ready
+          to track your real ponds.</td></tr>
+      </table>
+      <p>If you start fresh, it asks for:</p>
+      <ul>
+        <li><strong>Your name</strong> — just so the app can greet you.</li>
+        <li><strong>Your farm name</strong> — e.g. “Riverside Catfish”.</li>
+        <li><strong>Your usual feed price per kg</strong> — for example <code>₦1,300</code>. This lets the app
+          fill in feed costs for you automatically each day. You can change it later.</li>
+      </ul>
+      <p>It then offers an optional <strong>PIN lock</strong> (you can skip and add it later). After that, a
+        short <strong>welcome tour</strong> introduces each screen. You can replay that tour any time from
+        <strong>Settings ▸ Guide &amp; app tour</strong>.</p>
+      <div class="callout tip">
+        <span class="k">Tip · trying the demo first</span>
+        Explored with demo data and now want your real farm? Go to <strong>Settings ▸ Backup &amp; restore</strong>,
+        or simply start adding your own ponds. To wipe the demo completely, use <strong>Replace all</strong>
+        when importing a fresh backup, or clear the app data in your browser.
+      </div>
+    </section>
+
+    <section id="dashboard">
+      <h2><span class="n">4.</span> Reading the Dashboard</h2>
+      <p>The Dashboard (the home screen) is your whole farm at a glance. Across the top are four big numbers.
+        Here is what each one means in plain terms:</p>
+      <table>
+        <tr><th>Number</th><th>What it tells you</th></tr>
+        <tr><td><strong>Blended cost / kg</strong></td><td>Your <strong>break-even</strong> price across all
+          ponds together — what one kilo of fish has cost you so far. Sell above this and you profit; sell
+          below it and you lose.</td></tr>
+        <tr><td><strong>Total biomass</strong></td><td>The total weight of live fish you are holding right now,
+          across every pond (in kilograms).</td></tr>
+        <tr><td><strong>Cash in feed</strong></td><td>How much money you have put into feed so far. This is
+          money working in your ponds, not yet returned.</td></tr>
+        <tr><td><strong>Margin vs market</strong></td><td>The gap between today's market price and your cost.
+          <span class="profit">Green (a “+”)</span> means you are making money per kilo;
+          <span class="loss">red (a “−”)</span> means a kilo currently costs more than it sells for.</td></tr>
+      </table>
+      <p>Below the numbers you'll find:</p>
+      <ul>
+        <li><strong>Cost / kg trend</strong> — a line showing how your cost per kilo changes over the cycle.
+          It should <em>fall</em> as fish grow into their feed.</li>
+        <li><strong>Needs attention</strong> — short alerts, like a pond nearing harvest weight, a pond that
+          still needs a weight sample, or an unusual jump in fish deaths.</li>
+        <li><strong>Pond cards</strong> — one card per active pond showing its day number, cost/kg, FCR,
+          weight held, and survival.</li>
+      </ul>
+      <div class="callout warn">
+        <span class="k">If a number shows “—”</span>
+        A dash means there isn't enough information yet. Cost per kilo and FCR need at least one
+        <a href="#weights">weight sample</a> — weigh a few fish and the numbers appear.
+      </div>
+    </section>
+
+    <section id="log">
+      <h2><span class="n">5.</span> The daily feeding log</h2>
+      <p>This is the one habit that makes everything else work. It takes under 30 seconds.</p>
+      <ol class="steps">
+        <li>Tap the round <strong>+</strong> button at the bottom of the screen (or “Log feeding”).</li>
+        <li>If you have more than one active pond, tap the pond you fed.</li>
+        <li>Type <strong>how many kilos of feed</strong> you gave today.</li>
+        <li>The <strong>cost fills in by itself</strong> from your feed price. If today's feed cost was
+          different, just type over it.</li>
+        <li>Tap <strong>Save log</strong>. You'll see “Saved on this device ✓”.</li>
+      </ol>
+      <div class="callout tip">
+        <span class="k">Tip · repeat yesterday</span>
+        Fed the same amount as last time? Tap <strong>“Repeat yesterday”</strong> and it fills the number in
+        one touch. Two taps and you're done.
+      </div>
+      <p>On the same screen you can also, when needed, tap to <strong>Record deaths</strong> or
+        <strong>Add a weight sample</strong> — covered next.</p>
+      <p><strong>Reminders</strong> appear at the top of the log screen — for example, if a pond hasn't been
+        fed in a while, or is due for a weigh-in.</p>
+    </section>
+
+    <section id="ponds">
+      <h2><span class="n">6.</span> Ponds &amp; batches (cycles)</h2>
+      <p>A <strong>pond</strong> is a physical pond, tank, or tarpaulin. A <strong>batch</strong> (the app calls
+        it a <em>cycle</em>) is one stocking of fish in that pond, from the day you put fingerlings in until
+        you harvest and close it.</p>
+      <h3>Add a pond</h3>
+      <ol class="steps">
+        <li>Go to <strong>Ponds</strong> and tap to add a new pond.</li>
+        <li>Give it a name (e.g. “Pond A”) and pick the type (earthen, concrete, tarpaulin, or tank).</li>
+      </ol>
+      <h3>Stock a batch</h3>
+      <p>Open the pond and stock a cycle. You enter:</p>
+      <ul>
+        <li><strong>How many fingerlings</strong> you put in (e.g. 500).</li>
+        <li><strong>What each fingerling cost</strong> (e.g. ₦50).</li>
+        <li><strong>Their starting weight</strong> (about 5 g is typical) and your <strong>target weight</strong>
+          (e.g. 1,000 g = 1 kg).</li>
+        <li>The <strong>stocking date</strong> — the day they went in.</li>
+      </ul>
+      <p>From then on, the pond keeps its own running story: cost/kg, FCR, survival, and days in cycle. When
+        you finish selling, you <strong>close the cycle</strong> and can stock a fresh batch.</p>
+      <div class="callout">
+        <span class="k">Why the starting details matter</span>
+        Fingerling count and cost are part of your true cost. Getting them right at stocking means every
+        number afterwards is honest — no guessing at harvest time.
+      </div>
+    </section>
+
+    <section id="weights">
+      <h2><span class="n">7.</span> Weighing your fish</h2>
+      <p>Weight samples are how the app knows how much fish you're holding and what a kilo really costs.
+        Without them, cost/kg and FCR can't be calculated (they show “—”).</p>
+      <ol class="steps">
+        <li>Scoop out about <strong>10 fish</strong> at random.</li>
+        <li>Weigh them together and work out the <strong>average weight of one fish in grams</strong>
+          (total grams ÷ number of fish).</li>
+        <li>In the daily log, tap <strong>“Add weight sample”</strong> and enter that average (e.g. 450 g).</li>
+      </ol>
+      <p>Do this <strong>every week or two</strong>. The more samples you add, the more accurate your cost
+        trend and harvest timing become.</p>
+      <div class="callout tip">
+        <span class="k">Tip</span>
+        Weigh at the same time of day (e.g. before the morning feed) for steadier readings. A handful of fish
+        is enough — you're after a fair average, not every fish.
+      </div>
+    </section>
+
+    <section id="deaths">
+      <h2><span class="n">8.</span> Recording deaths</h2>
+      <p>When you lose fish, record it — it keeps your survival rate and your true cost honest (fewer fish
+        means the same feed cost is spread over less fish).</p>
+      <ol class="steps">
+        <li>In the daily log, tap <strong>“Record deaths”</strong>.</li>
+        <li>Enter how many fish you lost that day. Save as normal.</li>
+      </ol>
+      <p>If deaths suddenly spike, the Dashboard raises a <strong>“mortality spike”</strong> alert so you can
+        check water, feed, or disease quickly.</p>
+    </section>
+
+    <section id="feed">
+      <h2><span class="n">9.</span> Feed &amp; market price</h2>
+      <p>Two prices power all your money figures. Set them in <strong>Settings ▸ Feed &amp; market</strong>.</p>
+      <ul>
+        <li><strong>Feed price (₦ per kg)</strong> — what you pay for feed. This auto-fills your daily feed
+          cost so you rarely type it by hand.</li>
+        <li><strong>Market price (₦ per kg)</strong> — what a kilo of table-size fish sells for today. This is
+          what “Margin vs market” compares your cost against.</li>
+      </ul>
+      <div class="callout warn">
+        <span class="k">Keep the market price current</span>
+        Prices move. Update the market price whenever it changes, otherwise “Margin vs market” and the profit
+        view will be comparing against an old number.
+      </div>
+    </section>
+
+    <section id="analytics">
+      <h2><span class="n">10.</span> Analytics &amp; trends</h2>
+      <p>The <strong>Analytics</strong> screen is where you study a pond in depth and make decisions:</p>
+      <ul>
+        <li><strong>Cost-per-kg trend</strong> — watch it fall as fish grow. A rising line is a warning that
+          feeding or deaths need attention.</li>
+        <li><strong>Break-even</strong> — the price you must beat to profit.</li>
+        <li><strong>Profit view</strong> — what you'd make at today's market price.</li>
+        <li><strong>On-device insights</strong> — plain bullet points the app works out for you, with no
+          internet needed.</li>
+      </ul>
+      <div class="callout">
+        <span class="k">A quick worked example</span>
+        Say a pond has cost you <strong>₦900,000</strong> so far (fingerlings + feed + other costs) and is
+        holding <strong>1,000 kg</strong> of fish. Your cost per kilo is
+        <strong>₦900,000 ÷ 1,000 = ₦900/kg</strong>. If the market pays <strong>₦1,500/kg</strong>, your
+        margin is <span class="profit">+₦600 per kilo</span>. Grow the fish a little more and that cost per
+        kilo usually keeps falling.
+      </div>
+    </section>
+
+    <section id="ai">
+      <h2><span class="n">11.</span> The AI summary (optional)</h2>
+      <p>On the Analytics screen you can tap <strong>“Generate summary”</strong> to get a short, plain-English
+        read on how your ponds are doing — like a helper reading your numbers aloud and pointing out what
+        stands out.</p>
+      <p>It is <strong>completely optional</strong> and stays off until you turn it on. When you use it:</p>
+      <ul>
+        <li>Only <strong>farm totals</strong> (like cost/kg and weights) are sent to work out the summary —
+          never your name, unless you choose to include it.</li>
+        <li>The app's own on-device bullet points always stay, with or without the AI summary.</li>
+        <li>If there's no internet, the summary simply won't run — everything else still works.</li>
+      </ul>
+      <div class="callout tip">
+        <span class="k">Tip</span>
+        Treat the AI summary as a friendly second opinion, not gospel. Your logged numbers are the truth; the
+        summary just helps you notice things faster.
+      </div>
+    </section>
+
+    <section id="harvest">
+      <h2><span class="n">12.</span> Deciding when to harvest</h2>
+      <p>There's usually a sweet spot: hold too short and fish are small and cost more per kilo; hold too long
+        and extra feed stops paying for itself. PondLedger helps you spot it:</p>
+      <ul>
+        <li>Watch the <strong>cost / kg trend</strong> flatten out — when it stops falling much, extra feeding
+          is giving less back.</li>
+        <li>The Dashboard flags a pond <strong>“nearing harvest weight”</strong> once the average reaches
+          about 85% of your target.</li>
+        <li>Check <strong>margin vs market</strong> — harvest while the gap is healthy.</li>
+      </ul>
+    </section>
+
+    <section id="backup">
+      <h2><span class="n">13.</span> Backup &amp; restore — please do this</h2>
+      <p>Because your records live only on this phone, a backup is your safety net. It's one tap.</p>
+      <h3>Make a backup</h3>
+      <ol class="steps">
+        <li>Go to <strong>Settings ▸ Backup &amp; restore</strong>.</li>
+        <li>Tap <strong>“Export backup”</strong>. A file downloads (named like
+          <code>pondledger-backup-2026-08-11.json</code>).</li>
+        <li>Keep it somewhere safe — email it to yourself, or save to Google Drive / your files.</li>
+      </ol>
+      <h3>Restore (or move to a new phone)</h3>
+      <ol class="steps">
+        <li>Open PondLedger on the phone, go to <strong>Settings ▸ Backup &amp; restore</strong>.</li>
+        <li>Tap <strong>“Choose file to import”</strong> and pick your backup file.</li>
+        <li>Choose how to bring it in:
+          <ul>
+            <li><strong>Merge</strong> — adds the backup's records to what's already there.</li>
+            <li><strong>Replace all</strong> — wipes this phone's data first, then loads the backup.</li>
+          </ul>
+        </li>
+        <li>Confirm. Done.</li>
+      </ol>
+      <div class="callout warn">
+        <span class="k">Handle “Replace all” with care</span>
+        “Replace all” erases the current data on this phone before importing. Only use it when you're sure the
+        backup file is the one you want. If unsure, choose <strong>Merge</strong>.
+      </div>
+      <div class="callout tip">
+        <span class="k">Tip · a good routine</span>
+        Export a backup at the end of each week, and always before changing phones or clearing your browser.
+      </div>
+    </section>
+
+    <section id="lock">
+      <h2><span class="n">14.</span> Locking the app with a PIN</h2>
+      <p>Add a PIN so others can't open your books on your phone.</p>
+      <ol class="steps">
+        <li>Go to <strong>Settings ▸ App lock</strong>.</li>
+        <li>Enter a <strong>4–8 digit PIN</strong> twice and enable it.</li>
+        <li>From now on, PondLedger asks for the PIN when you open it.</li>
+      </ol>
+      <p>To remove or change it, enter your current PIN in the same place. To change it, remove the old one
+        and set a new one.</p>
+      <div class="callout warn">
+        <span class="k">Important</span>
+        The PIN is a <strong>screen lock, not encryption</strong> — it stops casual snooping, but your data
+        still sits unencrypted in the phone's storage. And there's no “forgot PIN” reset, so don't forget it.
+      </div>
+    </section>
+
+    <section id="glossary">
+      <h2><span class="n">15.</span> Word list</h2>
+      <dl class="glossary">
+        <dt>Cost per kilo (cost/kg)</dt>
+        <dd>All money spent on a pond so far, divided by the weight of live fish it's holding. Your true cost
+          to produce one kilo.</dd>
+        <dt>Break-even</dt>
+        <dd>The price you must sell at just to cover costs — the same as your cost per kilo. Above it you
+          profit; below it you lose.</dd>
+        <dt>Biomass</dt>
+        <dd>The total weight of live fish you're holding, in kilograms.</dd>
+        <dt>FCR (Feed Conversion Ratio)</dt>
+        <dd>How many kilos of feed it took to add one kilo of fish. Lower is better — around 1.0–1.5 is strong
+          for catfish. A high FCR means feed is being wasted.</dd>
+        <dt>Survival rate</dt>
+        <dd>The share of stocked fish still alive, as a percentage.</dd>
+        <dt>Fingerling</dt>
+        <dd>A young fish you stock the pond with.</dd>
+        <dt>Cycle / batch</dt>
+        <dd>One stocking of a pond, from putting fish in to harvesting and closing it.</dd>
+        <dt>Margin vs market</dt>
+        <dd>Today's market price minus your cost per kilo — your profit (or loss) on each kilo right now.</dd>
+        <dt>Weight sample</dt>
+        <dd>The average weight of a handful of fish, used to estimate the whole pond.</dd>
+      </dl>
+    </section>
+
+    <section id="faq">
+      <h2><span class="n">16.</span> Common questions</h2>
+      <div class="faq">
+        <details><summary>Do I need internet to use it?</summary>
+          <p>No. Once installed, PondLedger works fully offline. The only feature that uses the internet is the
+            optional AI summary, which you turn on yourself.</p></details>
+        <details><summary>Do I need to create an account or pay?</summary>
+          <p>No account, no sign-in, no fee. Everything runs on your phone.</p></details>
+        <details><summary>Why does cost per kilo show a dash “—”?</summary>
+          <p>It needs at least one weight sample. Weigh about 10 fish, add the average in the daily log, and
+            the number appears.</p></details>
+        <details><summary>Can I track more than one pond?</summary>
+          <p>Yes — add as many ponds as you like. The Dashboard blends them into farm totals, and each pond
+            keeps its own figures.</p></details>
+        <details><summary>What if I miss a day of logging?</summary>
+          <p>No problem. Log it when you can and set the correct date on the entry. More regular logging just
+            makes the numbers more accurate.</p></details>
+        <details><summary>Will an app update delete my records?</summary>
+          <p>No. Updates don't touch your data, and imports of older backups are safely upgraded. Still, keep a
+            backup — it's your safety net against a lost or reset phone.</p></details>
+        <details><summary>Can two people use it on different phones?</summary>
+          <p>Each phone keeps its own records. To move data between phones, export a backup on one and import
+            it on the other. (Live multi-phone sync isn't in this version.)</p></details>
+      </div>
+    </section>
+
+    <section id="trouble">
+      <h2><span class="n">17.</span> If something goes wrong</h2>
+      <table>
+        <tr><th>Problem</th><th>Try this</th></tr>
+        <tr><td>Numbers look wrong or stuck</td><td>Close and reopen the app. Check you've added a recent
+          weight sample and that your feed/market prices are set.</td></tr>
+        <tr><td>“Margin vs market” is empty</td><td>Set today's market price in Settings ▸ Feed &amp; market.</td></tr>
+        <tr><td>AI summary won't generate</td><td>Check you have internet and that you turned the feature on.
+          It's fine to skip it — the on-device insights still work.</td></tr>
+        <tr><td>Forgot which phone has the latest data</td><td>Export a backup from each and compare dates.
+          Use the newest.</td></tr>
+        <tr><td>Changing phones</td><td>Export a backup on the old phone, install PondLedger on the new one,
+          and import the file (choose <strong>Replace all</strong> on a brand-new install).</td></tr>
+      </table>
+      <div class="callout">
+        <span class="k">Golden rule</span>
+        When in doubt, <strong>make a backup first</strong>. It costs one tap and protects everything you've
+        recorded.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <p><span class="pill">PondLedger — Farmer's Guide</span></p>
+  <p>Know your true cost per kilo, per pond, in real time. Your records stay on your device — back them up
+    often. Happy farming. 🐟</p>
+</footer>
+
+</body>
+</html>
