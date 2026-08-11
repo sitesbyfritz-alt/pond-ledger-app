@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 const SYSTEM_INSTRUCTION =
   "You are a Nigerian catfish-farming P&L analyst. Given these per-pond metrics, " +
   "write ONE short paragraph (max 4 sentences) a smallholder farmer can act on today. " +
-  "Use Naira and plain language. No preamble, no bullet points, no markdown headings.";
+  "Use Naira and plain language. No preamble, no bullet points, no markdown, no asterisks.";
 
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
@@ -40,6 +40,10 @@ export async function POST(req: Request): Promise<Response> {
         systemInstruction: SYSTEM_INSTRUCTION,
         maxOutputTokens: 400,
         temperature: 0.4,
+        // Gemini 3.x "thinks" by default; on a one-paragraph task the reasoning
+        // tokens eat the output budget and the SDK returns the leaked thought
+        // preamble instead of the answer. Disable thinking for a clean summary.
+        thinkingConfig: { thinkingBudget: 0 },
       },
     });
     const summary = res.text?.trim();
