@@ -47,11 +47,6 @@ export default function Home() {
             </div>
           ))}
         </div>
-
-        <p className="mt-10 text-xs text-muted-foreground">
-          Scaffold ready. See <code className="text-foreground">PondLedger_ClaudeCode_BuildPrompt.md</code>{" "}
-          and build from Milestone 1.
-        </p>
       </div>
     </main>
   );
