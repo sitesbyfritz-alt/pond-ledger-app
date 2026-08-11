@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { repo, newRecord } from "./repository";
 import { db } from "./db";
 import { nairaToKobo } from "./format";
+import { migrateBackup, BACKUP_VERSION, BackupVersionError } from "./types";
 
 async function wipe() {
   await Promise.all(db.tables.map((t) => t.clear()));
@@ -75,5 +76,30 @@ describe("backup round-trip", () => {
 
   it("rejects a malformed backup document", async () => {
     await expect(repo.importBackup('{"nope":true}', "replace")).rejects.toBeDefined();
+  });
+
+  it("rejects a backup made by a newer app version (no data touched)", async () => {
+    const { farm } = await seedMinimal();
+    const backup = JSON.parse(await repo.exportBackup());
+    backup.backupVersion = BACKUP_VERSION + 1;
+
+    await expect(repo.importBackup(JSON.stringify(backup), "replace")).rejects.toThrow(/newer version/i);
+    // replace must NOT have wiped existing data when the version guard trips
+    expect((await repo.listPonds(farm.id)).length).toBe(1);
+  });
+});
+
+describe("migrateBackup", () => {
+  it("passes a current-version doc through unchanged", () => {
+    const doc = { backupVersion: BACKUP_VERSION, exportedAt: new Date().toISOString(), data: { x: 1 } };
+    expect(migrateBackup(doc)).toEqual(doc);
+  });
+
+  it("throws BackupVersionError on an unrecognisable doc", () => {
+    expect(() => migrateBackup({ nope: true })).toThrow(BackupVersionError);
+  });
+
+  it("throws on a newer-than-supported version", () => {
+    expect(() => migrateBackup({ backupVersion: BACKUP_VERSION + 1, data: {} })).toThrow(/newer version/i);
   });
 });

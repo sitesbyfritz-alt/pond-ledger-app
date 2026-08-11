@@ -2,7 +2,7 @@
 // The ONLY way the app touches data. UI/hooks depend on this interface, never on Dexie.
 // Swap DexieRepository for a future SyncRepository (e.g. Supabase) with zero UI changes.
 import { db } from "./db";
-import { BackupDoc, BACKUP_VERSION } from "./types";
+import { BackupDoc, BACKUP_VERSION, migrateBackup } from "./types";
 import type {
   Profile,
   Farm,
@@ -179,8 +179,9 @@ export class DexieRepository implements Repository {
   }
 
   async importBackup(json: string, mode: "replace" | "merge") {
-    const doc = BackupDoc.parse(JSON.parse(json));
-    // TODO: if doc.backupVersion < BACKUP_VERSION, run forward migrations here.
+    // Migrate raw JSON up to the current version (rejecting newer/unknown
+    // backups) BEFORE strict validation, then validate the current shape.
+    const doc = BackupDoc.parse(migrateBackup(JSON.parse(json)));
     const d = doc.data;
     await db.transaction("rw", db.tables, async () => {
       if (mode === "replace") {

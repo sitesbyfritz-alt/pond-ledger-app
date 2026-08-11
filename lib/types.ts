@@ -166,3 +166,45 @@ export const BackupDoc = z.object({
   }),
 });
 export type BackupDoc = z.infer<typeof BackupDoc>;
+
+/** Thrown when a backup can't be safely imported: unrecognisable shape, or made
+ *  by a newer app version than this one. Distinct from a Zod validation error so
+ *  the UI can show a version-specific message. */
+export class BackupVersionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BackupVersionError";
+  }
+}
+
+/** Forward migrations, keyed by the version they upgrade FROM (n → n+1). Empty
+ *  today (BACKUP_VERSION is 1). When the DB/backup shape changes: bump
+ *  BACKUP_VERSION and add MIGRATIONS[oldVersion] that reshapes the raw doc up one
+ *  step. Migrations run on the raw JSON, before strict Zod validation. */
+type RawBackup = { backupVersion: number; exportedAt?: string; data: unknown };
+const MIGRATIONS: Record<number, (doc: RawBackup) => RawBackup> = {};
+
+/** Bring a raw parsed backup up to the current BACKUP_VERSION before strict
+ *  validation. Rejects newer-than-supported backups and unrecognised shapes
+ *  rather than silently dropping data — backup is sacred (see CLAUDE.md). */
+export function migrateBackup(raw: unknown): RawBackup {
+  if (
+    typeof raw !== "object" ||
+    raw === null ||
+    typeof (raw as { backupVersion?: unknown }).backupVersion !== "number"
+  ) {
+    throw new BackupVersionError("Not a recognisable PondLedger backup (missing backupVersion).");
+  }
+  let doc = raw as RawBackup;
+  if (doc.backupVersion > BACKUP_VERSION) {
+    throw new BackupVersionError(
+      `This backup was made by a newer version of PondLedger (backup v${doc.backupVersion}, this app supports v${BACKUP_VERSION}). Update the app, then import.`
+    );
+  }
+  while (doc.backupVersion < BACKUP_VERSION) {
+    const step = MIGRATIONS[doc.backupVersion];
+    if (!step) throw new BackupVersionError(`Cannot migrate this backup from v${doc.backupVersion}.`);
+    doc = step(doc);
+  }
+  return doc;
+}
