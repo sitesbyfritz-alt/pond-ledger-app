@@ -34,7 +34,7 @@ export async function POST(req: Request): Promise<Response> {
   try {
     const ai = new GoogleGenAI({ apiKey: key });
     const res = await ai.models.generateContent({
-      model: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
+      model: process.env.GEMINI_MODEL ?? "gemini-3.5-flash",
       contents: JSON.stringify(parsed.data),
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
