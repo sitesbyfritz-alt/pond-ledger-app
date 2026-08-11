@@ -50,8 +50,8 @@ export async function POST(req: Request): Promise<Response> {
     if (!summary) return json({ error: "no_summary" }, 422);
     return json({ summary }, 200);
   } catch (err) {
+    // Log server-side (visible in function logs) but never leak provider detail to the client.
     console.error("[insights] Gemini call failed:", err);
-    // TEMP diagnostic (revert): surface provider error to pinpoint the prod 502. No key is ever in it.
-    return json({ error: "ai_error", detail: String((err as Error)?.message ?? err) }, 502);
+    return json({ error: "ai_error" }, 502);
   }
 }
